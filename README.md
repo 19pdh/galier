@@ -4,7 +4,7 @@ Yet another photo gallery generator.
 
 ## Why?
 
-I could not find any other working solution that would be simple. This script just resizes all images and generates grid menu for them. That is all.
+I could not find any other working solution that would be as simple as this. This script just resizes all images and generates grid menu for them. That is all.
 
 ## Usage
 
