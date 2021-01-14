@@ -1,0 +1,60 @@
+#!/bin/sh
+## Script for generating photo gallery website
+##
+## Usage:
+## $ ./gal [PHOTOS DIR] [OUTPUT DIR]
+
+## === Customize ===
+
+QUALITY=70
+THUMBNAIL_RESOLUTION=250
+RESOLUTION=1500
+
+## =================
+
+
+PHOTOS=$1
+OUTPUT=$2
+mkdir -p $2/{photos,thumbs}
+
+## Generate index.html menu file
+cp style.css $OUTPUT
+
+cat > $OUTPUT/index.html <<EOF
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Gallery</title>
+    <link rel="stylesheet" href="style.css" type="text/css" >
+  </head>
+  <body>
+    <div class="tiles">
+EOF
+
+
+for f in $PHOTOS/*.{jpg,JPG,jpeg,JPEG,png,PNG}; do
+  filename=$(basename $f)
+  [ -f $f ] && cat >> $OUTPUT/index.html <<EOF
+      <div class="tile">
+        <a href="photos/$filename">
+          <img src="thumbs/$filename" />
+        </a>
+      </div>
+EOF
+done
+
+cat >> $OUTPUT/index.html <<EOF
+    </div>
+  </body>
+</html>
+EOF
+
+## Optimize images
+
+for f in $PHOTOS/*.{jpg,JPG,jpeg,JPEG,png,PNG}; do
+  filename=$(basename $f)
+  [ -f $f ] && convert -auto-orient -strip -quality $QUALITY -resize x$RESOLUTION "$f" "$OUTPUT/photos/$filename" && \
+    convert -auto-orient -strip -quality $QUALITY -resize x$THUMBNAIL_RESOLUTION "$f" "$OUTPUT/thumbs/$filename"
+done
