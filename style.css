@@ -4,7 +4,14 @@ body {
   padding: 0;
   width: 100%;
   height: 100vh;
+  font-family: sans-serif;
 }
+
+footer {
+  text-align: center;
+  padding: 10px;
+}
+
 .tiles {
   padding: 6vh 16vw;
   display: flex;
@@ -34,14 +41,14 @@ body {
   transform: scale(1.1);
 }
 
-@media only screen and (max-width: 420px) {
+@media only screen and (max-width: 442px) {
   .tiles {
     padding: 6vh 4vw;
   }
 
   .tile {
     margin: 5px;
-    width: 44vw;
-    height: 44vw;
+    width: 100%;
+    height: 100%;
   }
 }
