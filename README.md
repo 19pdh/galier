@@ -2,7 +2,7 @@
 
 Yet another photo gallery generator.
 
-[Demo page](http://pics.niedzwiedzinski.cyou/mando)
+[Demo page](http://pics.niedzwiedzinski.cyou/mando/)
 
 ## Why?
 
