@@ -12,10 +12,11 @@
       src = self;
 
       installPhase = ''
-        mkdir -p $out/bin
+        mkdir -p $out/bin $out/share/gal
         cp gal $out/bin
 
         sed -i 's:convert:${imagemagick}/bin/convert:g' $out/bin/gal
+        sed -i 's:style.css:$out/share/gal/style.css:g' $out/bin/gal
       '';
     };
 
