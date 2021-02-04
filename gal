@@ -23,7 +23,7 @@ TITLE=${TITLE:-$(basename $OUTPUT)}
 mkdir -p $2/{photos,thumbs}
 
 ## Generate index.html menu file
-cp style.css $OUTPUT
+cat style.css > $OUTPUT/style.css
 echo "Generating index.html"
 
 cat > $OUTPUT/index.html <<EOF
