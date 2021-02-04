@@ -3,6 +3,9 @@
 ##
 ## Usage:
 ## $ ./gal [PHOTOS DIR] [OUTPUT DIR]
+##
+## Setting custom title:
+## $ TITLE=Title ./gal [AS ABOVE]
 
 ## === Customize ===
 
@@ -13,8 +16,10 @@ RESOLUTION=1500
 ## =================
 
 
+
 PHOTOS=$1
 OUTPUT=$2
+TITLE=${TITLE:-$(basename $OUTPUT)}
 mkdir -p $2/{photos,thumbs}
 
 ## Generate index.html menu file
@@ -27,10 +32,12 @@ cat > $OUTPUT/index.html <<EOF
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
-    <title>Gallery</title>
+    <title>$TITLE</title>
     <link rel="stylesheet" href="style.css" type="text/css" >
   </head>
   <body>
+    <h1>$TITLE</h1>
+    <h3>Last update: $(date '+%d.%m.%Y')</h3>
     <div class="tiles">
 EOF
 
