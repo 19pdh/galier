@@ -19,6 +19,7 @@ mkdir -p $2/{photos,thumbs}
 
 ## Generate index.html menu file
 cp style.css $OUTPUT
+echo "Generating index.html"
 
 cat > $OUTPUT/index.html <<EOF
 <!DOCTYPE html>
@@ -54,10 +55,23 @@ cat >> $OUTPUT/index.html <<EOF
 </html>
 EOF
 
+## Generate photo_list
+echo "Generating photo_list"
+
+[ -f $OUTPUT/photo_list ] && echo "Replacing existing photo_list" && rm $OUTPUT/photo_list
+
+for f in $PHOTOS/*.{jpg,JPG,jpeg,JPEG,png,PNG}; do
+  filename=$(basename $f)
+  [ -f $f ] && cat >> $OUTPUT/photo_list <<EOF
+$filename
+EOF
+done
+
 ## Optimize images
 
 for f in $PHOTOS/*.{jpg,JPG,jpeg,JPEG,png,PNG}; do
   filename=$(basename $f)
+  echo "Optimizing $filename"
   [ -f $f ] && convert -auto-orient -strip -quality $QUALITY -resize x$RESOLUTION "$f" "$OUTPUT/photos/$filename" && \
     convert -auto-orient -strip -quality $QUALITY -resize x$THUMBNAIL_RESOLUTION "$f" "$OUTPUT/thumbs/$filename"
 done
