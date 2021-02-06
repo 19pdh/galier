@@ -86,5 +86,5 @@ for f in $PHOTOS/*.{jpg,JPG,jpeg,JPEG,png,PNG}; do
   echo "Optimizing $filename"
   [ -f $f ] && convert -auto-orient -strip -quality $QUALITY -resize x$RESOLUTION "$f" "$OUTPUT/photos/$filename" && \
     convert -auto-orient -strip -quality $QUALITY -resize x$THUMBNAIL_RESOLUTION "$f" "$OUTPUT/thumbs/$filename" && \
-    cwebp -q $QUALITY "$OUTPUT/thumbs/$filename" -o "$OUTPUT/thumbs/${filename%.*}.webp"
+    cwebp -q $QUALITY -resize 400 0 $f -o "$OUTPUT/thumbs/${filename%.*}.webp"
 done
