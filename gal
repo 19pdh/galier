@@ -48,7 +48,11 @@ for f in $PHOTOS/*.{jpg,JPG,jpeg,JPEG,png,PNG}; do
   [ -f $f ] && cat >> $OUTPUT/index.html <<EOF
       <div class="tile">
         <a href="photos/$filename">
-          <img src="thumbs/$filename" alt="$filename" />
+          <picture>
+            <source srcset="thumbs/${filename%.*}.webp" type="image/webp">
+            <source srcset="thumbs/$filename" type="image/${filename##*.}">
+            <img src="thumbs/$filename" alt="$filename" />
+          </picture>
         </a>
       </div>
 EOF
@@ -81,5 +85,6 @@ for f in $PHOTOS/*.{jpg,JPG,jpeg,JPEG,png,PNG}; do
   filename=$(basename $f)
   echo "Optimizing $filename"
   [ -f $f ] && convert -auto-orient -strip -quality $QUALITY -resize x$RESOLUTION "$f" "$OUTPUT/photos/$filename" && \
-    convert -auto-orient -strip -quality $QUALITY -resize x$THUMBNAIL_RESOLUTION "$f" "$OUTPUT/thumbs/$filename"
+    convert -auto-orient -strip -quality $QUALITY -resize x$THUMBNAIL_RESOLUTION "$f" "$OUTPUT/thumbs/$filename" && \
+    cwebp -q $QUALITY "$OUTPUT/thumbs/$filename" -o "$OUTPUT/thumbs/${filename%.*}.webp"
 done

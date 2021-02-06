@@ -7,7 +7,7 @@
     with import nixpkgs { system = "x86_64-linux"; };
     stdenv.mkDerivation {
       pname = "gal";
-      version = "0.1";
+      version = "0.2";
 
       src = self;
 
@@ -17,6 +17,7 @@
         cp style.css $out/share/gal
 
         sed -i 's:convert:${imagemagick}/bin/convert:g' $out/bin/gal
+        sed -i 's:cwebp:${libwebp}/bin/cwebp:g' $out/bin/gal
         sed -i "s:cp style.css:cp $out/share/gal/style.css:g" $out/bin/gal
       '';
     };
