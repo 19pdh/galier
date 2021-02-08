@@ -15,7 +15,8 @@ RESOLUTION=1500
 
 ## =================
 
-
+[ -z $1 ] && echo "You need to pass photos dir" && exit 1
+[ -z $2 ] && echo "You need to pass output dir" && exit 1
 
 PHOTOS=$1
 OUTPUT=$2
@@ -61,6 +62,7 @@ done
 cat >> $OUTPUT/index.html <<EOF
     </div>
     <footer>
+      <p>Pobierz: <a href="archive_$TITLE.zip">📁 Archiwum</a></p>
       <p>This page is <a href="https://jeffhuang.com/designed_to_last/">designed to last</a>.</p>
     </footer>
   </body>
@@ -88,3 +90,7 @@ for f in $PHOTOS/*.{jpg,JPG,jpeg,JPEG,png,PNG}; do
     convert -auto-orient -strip -quality $QUALITY -resize x$THUMBNAIL_RESOLUTION "$f" "$OUTPUT/thumbs/$filename" && \
     cwebp -q $QUALITY -resize 400 0 $f -o "$OUTPUT/thumbs/${filename%.*}.webp"
 done
+
+## Create zip archive
+
+zip $OUTPUT/"archive_$TITLE.zip" -r $OUTPUT/photos
