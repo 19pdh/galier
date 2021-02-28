@@ -1,0 +1,162 @@
+#!/bin/sh
+## Script for generating photo gallery website
+##
+## Usage:
+## $ ./galier [MEDIA DIR] [OUTPUT DIR]
+##
+## Setting custom title:
+## $ TITLE=Title ./galier [AS ABOVE]
+
+## === Customize ===
+
+QUALITY=70
+THUMBNAIL_RESOLUTION=250
+RESOLUTION=1500
+
+## =================
+
+[ -z $1 ] && echo "You need to pass media dir" && exit 1
+[ -z $2 ] && echo "You need to pass output dir" && exit 1
+
+MEDIA=$1
+OUTPUT=$2
+TITLE=${TITLE:-$(basename $OUTPUT)}
+mkdir -p $2/{photos,vids,thumbs}
+
+## Generate index.html menu file
+src=`dirname $(readlink -f $0)`
+cp $src/style.css $OUTPUT
+chmod 644 $OUTPUT/style.css
+echo "Generating index.html"
+
+cat > $OUTPUT/index.html <<EOF
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>$TITLE</title>
+    <link rel="stylesheet" href="style.css" type="text/css" >
+  </head>
+  <body>
+    <h1>$TITLE</h1>
+    <h3>Last update: $(date '+%d.%m.%Y')</h3>
+    <div class="tiles">
+EOF
+
+### Images
+
+[ -f $OUTPUT/photo_list ] && echo "Replacing existing photo_list" && rm $OUTPUT/photo_list
+
+for f in $MEDIA/*.{jpg,JPG,jpeg,JPEG,png,PNG}; do
+  filename=$(basename $f)
+  [ -f $f ] || continue
+
+  cat >> $OUTPUT/index.html <<EOF
+      <div class="tile">
+        <a href="photos/$filename">
+          <picture>
+            <source srcset="thumbs/${filename%.*}.webp" type="image/webp">
+            <source srcset="thumbs/$filename" type="image/${filename##*.}">
+            <img src="thumbs/$filename" alt="$filename" />
+          </picture>
+        </a>
+      </div>
+EOF
+
+  echo "Optimizing $filename"
+  convert -auto-orient -strip -quality $QUALITY -resize x$RESOLUTION "$f" "$OUTPUT/photos/$filename"
+  convert -auto-orient -strip -quality $QUALITY -resize x$THUMBNAIL_RESOLUTION "$f" "$OUTPUT/thumbs/$filename"
+  cwebp -q $QUALITY -resize 400 0 $f -o "$OUTPUT/thumbs/${filename%.*}.webp"
+
+  echo $filename >> $OUTPUT/photo_list
+
+done
+
+### Movies
+
+cat >> $OUTPUT/index.html <<EOF
+    </div>
+    <h2>Filmy</h2>
+    <div class="tiles">
+EOF
+
+[ -f $OUTPUT/vids_list ] && echo "Replacing existing vids_list" && rm $OUTPUT/vids_list
+
+for f in $MEDIA/*.{webm,mp4,MP4,avi,AVI}; do
+  filename=$(basename $f)
+  [ -f $f ] || continue
+
+  mkdir $OUTPUT/vids/${filename%.*}
+
+  cat >> $OUTPUT/index.html <<EOF
+    <div class="tile">
+        <a href="vids/${filename%.*}/index.html">
+          <picture>
+            <source srcset="thumbs/${filename%.*}.vid.webp" type="image/webp">
+            <source srcset="thumbs/${filename%.*}.vid.jpg" type="image/jpg">
+            <img src="thumbs/${filename%.*}.vid.jpg" alt="$filename" />
+          </picture>
+        </a>
+      </div>
+EOF
+  tmp=`mktemp galier.XXX.jpg`
+  duration=`ffprobe -i $f -show_entries format=duration -v quiet -of csv="p=0" | cut -d'.' -f1`
+  echo $duration
+  [ -z $duration ] && echo "Empty \$duration for file $f" && exit 1
+  ffmpeg -y -ss $(($duration/2)) -i $f -vframes 1 $tmp
+
+  convert -auto-orient -strip -quality $QUALITY -resize x$THUMBNAIL_RESOLUTION "$tmp" "$OUTPUT/thumbs/${filename%.*}.vid.jpg"
+  cwebp -q $QUALITY -resize 400 0 $tmp -o "$OUTPUT/thumbs/${filename%.*}.vid.webp"
+  rm $tmp
+
+  [ -f $OUTPUT/vids/${filename%.*}/source.mp4 ] && \
+    echo "MP4 file for $filename exists" || \
+    ffmpeg -i $f -vcodec libx264 -crf 23 "$OUTPUT/vids/${filename%.*}/source.mp4"
+  [ -f $OUTPUT/vids/${filename%.*}/source.webm ] && \
+    echo "WEBM file for $filename exists" || \
+    ffmpeg -i $f -c:v libvpx -crf 23 -b:v 1M -c:a libvorbis "$OUTPUT/vids/${filename%.*}/source.webm"
+
+  cat > $OUTPUT/vids/${filename%.*}/index.html <<EOF
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>${filename%.*}</title>
+    <link rel="stylesheet" href="../../style.css" type="text/css" >
+  </head>
+  <body>
+    <video controls>
+      <source src="source.webm" type="video/webm">
+      <source src="source.mp4" type="video/mp4">
+    </video>
+    <h1>${filename%.*}</h1>
+    <h3>Last update: $(date '+%d.%m.%Y')</h3>
+    <footer>
+      <p>Pobierz: <a href="source.mp4">MP4</a></p>
+      <p>Pobierz: <a href="source.webm">WEBM</a></p>
+      <p>This page is <a href="https://jeffhuang.com/designed_to_last/">designed to last</a>.</p>
+    </footer>
+  </body>
+</html>
+EOF
+
+  echo ${filename%.*} >> $OUTPUT/vids_list
+
+done
+
+cat >> $OUTPUT/index.html <<EOF
+    </div>
+    <footer>
+      <p>Pobierz: <a href="archive_$TITLE.zip">📁 Archiwum</a></p>
+      <p>This page is <a href="https://jeffhuang.com/designed_to_last/">designed to last</a>.</p>
+    </footer>
+  </body>
+</html>
+EOF
+
+
+## Create zip archive
+
+zip $OUTPUT/"archive_$TITLE.zip" -r $OUTPUT
