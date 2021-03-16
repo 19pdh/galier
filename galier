@@ -25,7 +25,7 @@ mkdir -p $2/{photos,vids,thumbs}
 
 ## Generate index.html menu file
 src=`dirname $(readlink -f $0)`
-cp $src/style.css $OUTPUT
+cp $src/../share/galier/style.css $OUTPUT
 chmod 644 $OUTPUT/style.css
 echo "Generating index.html"
 
