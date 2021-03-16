@@ -83,7 +83,7 @@ EOF
 
 [ -f $OUTPUT/vids_list ] && echo "Replacing existing vids_list" && rm $OUTPUT/vids_list
 
-for f in $MEDIA/*.{webm,mp4,MP4,avi,AVI}; do
+for f in $MEDIA/*.{webm,mov,MOV,mkv,MKV,mp4,MP4,avi,AVI}; do
   filename=$(basename $f)
   [ -f $f ] || continue
 
@@ -110,12 +110,36 @@ EOF
   cwebp -q $QUALITY -resize 400 0 $tmp -o "$OUTPUT/thumbs/${filename%.*}.vid.webp"
   rm $tmp
 
-  [ -f $OUTPUT/vids/${filename%.*}/source.mp4 ] && \
-    echo "MP4 file for $filename exists" || \
+  if [ -f $OUTPUT/vids/${filename%.*}/source.mp4 ]; then
+    echo "MP4 file for $filename exists"
+    date1=`stat -c '%W' $OUTPUT/vids/${filename%.*}/source.mp4`
+  else
     ffmpeg -i $f -vcodec libx264 -crf 23 "$OUTPUT/vids/${filename%.*}/source.mp4"
-  [ -f $OUTPUT/vids/${filename%.*}/source.webm ] && \
-    echo "WEBM file for $filename exists" || \
+  fi
+
+  if [ -f $OUTPUT/vids/${filename%.*}/source.webm ]; then
+    echo "WEBM file for $filename exists"
+    date2=`stat -c '%W' $OUTPUT/vids/${filename%.*}/source.webm`
+  else
     ffmpeg -i $f -c:v libvpx -crf 23 -b:v 1M -c:a libvorbis "$OUTPUT/vids/${filename%.*}/source.webm"
+  fi
+
+  if [ -z $date1 ]; then
+    if [ -z $date2 ]; then
+      update_date=`date '+%d.%m.%Y'`
+    else
+      update_date=`date -d @$date2 '+%d.%m.%Y'`
+    fi
+  else
+    if [ -z $date2 ]; then
+      update_date=`date -d @$date1 '+%d.%m.%Y'`
+    else
+      [ ${date1} -lt ${date2} ] && \
+        update_date=`date -d @$date2 '+%d.%m.%Y'` || \
+        update_date=`date -d @$date1 '+%d.%m.%Y'`
+    fi
+  fi
+
 
   cat > $OUTPUT/vids/${filename%.*}/index.html <<EOF
 <!DOCTYPE html>
@@ -132,7 +156,7 @@ EOF
       <source src="source.mp4" type="video/mp4">
     </video>
     <h1>${filename%.*}</h1>
-    <h3>Last update: $(date '+%d.%m.%Y')</h3>
+    <h3>Last update: $update_date</h3>
     <footer>
       <p>Pobierz: <a href="source.mp4">MP4</a></p>
       <p>Pobierz: <a href="source.webm">WEBM</a></p>
